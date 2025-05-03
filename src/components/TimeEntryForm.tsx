@@ -15,7 +15,10 @@ export function TimeEntryForm({
   onTimeEntryAdded,
 }: TimeEntryFormProps) {
   const [hours, setHours] = useState<number | "">("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  });
   const [description, setDescription] = useState("");
   const [errors, setErrors] = useState<{ hours?: string; date?: string }>({});
   const timeTrackingService = new TimeTrackingService();
@@ -59,7 +62,9 @@ export function TimeEntryForm({
 
       // Reset form
       setHours("");
-      setDate("");
+      // Reset date to today's date
+      const today = new Date();
+      setDate(today.toISOString().split('T')[0]);
       setDescription("");
 
       // Notify parent component

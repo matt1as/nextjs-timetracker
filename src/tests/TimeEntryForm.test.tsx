@@ -161,7 +161,25 @@ describe("TimeEntryForm", () => {
     expect(mockOnTimeEntryAdded).not.toHaveBeenCalled();
   });
 
-  test("displays error when date is not provided", () => {
+  // test("displays error when date is not provided", () => {
+  //   render(
+  //     <TimeEntryForm
+  //       activityId={mockActivityId}
+  //       onTimeEntryAdded={mockOnTimeEntryAdded}
+  //     />
+  //   );
+
+  //   const hoursInput = screen.getByLabelText("Hours");
+  //   const form = screen.getByTestId("time-entry-form");
+
+  //   fireEvent.change(hoursInput, { target: { value: "5" } });
+  //   fireEvent.submit(form);
+
+  //   expect(screen.getByText("Date is required")).toBeInTheDocument();
+  //   expect(mockOnTimeEntryAdded).not.toHaveBeenCalled();
+  // });
+
+  test("displays error when date is cleared", () => {
     render(
       <TimeEntryForm
         activityId={mockActivityId}
@@ -170,9 +188,12 @@ describe("TimeEntryForm", () => {
     );
 
     const hoursInput = screen.getByLabelText("Hours");
+    const dateInput = screen.getByLabelText("Date");
     const form = screen.getByTestId("time-entry-form");
 
     fireEvent.change(hoursInput, { target: { value: "5" } });
+    // Clear the date field
+    fireEvent.change(dateInput, { target: { value: "" } });
     fireEvent.submit(form);
 
     expect(screen.getByText("Date is required")).toBeInTheDocument();
@@ -200,7 +221,9 @@ describe("TimeEntryForm", () => {
     fireEvent.submit(form);
 
     expect(hoursInput).toHaveValue(null);
-    expect(dateInput).toHaveValue("");
+    // The date should be reset to today's date after form submission
+    const today = new Date().toISOString().split('T')[0];
+    expect(dateInput).toHaveValue(today);
     expect(descriptionInput).toHaveValue("");
   });
 });
