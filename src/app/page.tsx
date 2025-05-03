@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ProjectList } from '@/components/ProjectList';
 import { ProjectForm } from '@/components/ProjectForm';
+import { QuickAddButton } from '@/components/QuickAddButton';
 
 export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -10,6 +11,12 @@ export default function Home() {
   // Function to trigger a refresh of the project list
   const handleProjectAdded = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  // Function to handle when a time entry is added via the QuickAddButton
+  const handleTimeEntryAdded = () => {
+    // We don't need to refresh the project list when a time entry is added,
+    // but we could add additional logic here if needed in the future
   };
 
   return (
@@ -24,6 +31,8 @@ export default function Home() {
           <ProjectList />
         </div>
       </div>
+      
+      <QuickAddButton onTimeEntryAdded={handleTimeEntryAdded} />
     </main>
   );
 }
