@@ -14,7 +14,10 @@ export function QuickAddButton({ onTimeEntryAdded }: QuickAddButtonProps) {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedActivityId, setSelectedActivityId] = useState("");
   const [hours, setHours] = useState<number | "">("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  });
   const [description, setDescription] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -57,7 +60,9 @@ export function QuickAddButton({ onTimeEntryAdded }: QuickAddButtonProps) {
     setSelectedProjectId("");
     setSelectedActivityId("");
     setHours("");
-    setDate("");
+    // Reset date to today's date
+    const today = new Date();
+    setDate(today.toISOString().split('T')[0]);
     setDescription("");
     setErrors({});
     setIsModalOpen(false);

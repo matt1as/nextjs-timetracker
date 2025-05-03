@@ -102,7 +102,11 @@ describe('QuickAddButton', () => {
     // Open the modal
     fireEvent.click(screen.getByText('Quick-Add Time'));
     
-    // Submit without filling form
+    // Clear date field and submit with incomplete form
+    const dateInput = screen.getByLabelText('Date');
+    fireEvent.change(dateInput, { target: { value: '' } });
+    
+    // Submit without filling required fields
     fireEvent.click(screen.getByText('Add Entry'));
     
     // Check for validation errors
