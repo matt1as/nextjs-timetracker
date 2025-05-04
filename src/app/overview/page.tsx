@@ -61,6 +61,7 @@ export default function OverviewPage() {
   const [sumsByActivity, setSumsByActivity] = useState<Record<string, number>>({});
   const [sumsByDay, setSumsByDay] = useState<Record<string, number>>({});
   const [sortedDays, setSortedDays] = useState<string[]>([]);
+  const [dayActivityBreakdown, setDayActivityBreakdown] = useState<Record<string, Record<string, number>>>({});
   const [activityDetails, setActivityDetails] = useState<ActivityDetailsState>({
     activityMap: {},
     entries: {},
@@ -127,12 +128,27 @@ export default function OverviewPage() {
 
     // Calculate sums by day
     const daySums: Record<string, number> = {};
+    // Track hours per activity for each day
+    const dayActivityBreakdown: Record<string, Record<string, number>> = {};
+    
     filteredEntries.forEach((entry) => {
       const dateKey = entry.date.toISOString().split("T")[0];
+      const activityId = entry.activityId;
+      
+      // Initialize if first entry for this day
       if (!daySums[dateKey]) {
         daySums[dateKey] = 0;
+        dayActivityBreakdown[dateKey] = {};
       }
+      
+      // Initialize activity tracking for this day if needed
+      if (!dayActivityBreakdown[dateKey][activityId]) {
+        dayActivityBreakdown[dateKey][activityId] = 0;
+      }
+      
+      // Add hours to day sum and activity breakdown
       daySums[dateKey] += entry.hours;
+      dayActivityBreakdown[dateKey][activityId] += entry.hours;
     });
 
     // Sort days in descending order
@@ -149,6 +165,7 @@ export default function OverviewPage() {
       activityMap,
       entries: activityEntries,
     });
+    setDayActivityBreakdown(dayActivityBreakdown);
   }, [filters.showThisWeekOnly, timeTrackingService]); // Include timeTrackingService in dependencies
 
   // Toggle handler for our yes/no questions
@@ -454,6 +471,7 @@ export default function OverviewPage() {
                 <thead className="border-b">
                   <tr>
                     <th className="text-left py-2">Date</th>
+                    <th className="text-left py-2">Activity Breakdown</th>
                     <th className="text-right py-2">Total Hours</th>
                   </tr>
                 </thead>
@@ -463,6 +481,28 @@ export default function OverviewPage() {
                       <td className="py-3">
                         {new Date(day).toLocaleDateString()}
                       </td>
+                      <td className="py-3">
+                        <div className="space-y-1">
+                          {Object.entries(dayActivityBreakdown[day] || {})
+                            .sort(([, hoursA], [, hoursB]) => 
+                              filters.sortByHoursDescending ? hoursB - hoursA : hoursA - hoursB
+                            )
+                            .map(([activityId, hours]) => {
+                              const activity = activityDetails.activityMap[activityId];
+                              return (
+                                <div key={activityId} className="flex justify-between text-sm">
+                                  <span className="text-gray-700">
+                                    {activity ? activity.name : "Unknown"} 
+                                    <span className="text-gray-500 ml-1">
+                                      ({activity ? activity.projectName : "Unknown Project"})
+                                    </span>
+                                  </span>
+                                  <span className="font-medium">{hours.toFixed(2)} hrs</span>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </td>
                       <td className="py-3 text-right font-semibold">
                         {sumsByDay[day].toFixed(2)}
                       </td>
@@ -470,6 +510,7 @@ export default function OverviewPage() {
                   ))}
                   <tr className="bg-gray-50">
                     <td className="py-3 font-bold">Total</td>
+                    <td></td>
                     <td className="py-3 text-right font-bold">
                       {Object.values(sumsByDay)
                         .reduce((sum, hours) => sum + hours, 0)
