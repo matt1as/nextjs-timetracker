@@ -10,9 +10,9 @@ import {
   BarElement,
   Title,
   Tooltip,
-  Legend
-} from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+  Legend,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
 
 // Register ChartJS components
 ChartJS.register(
@@ -35,7 +35,7 @@ interface FilterState {
 }
 
 // Define types for our activity details
-interface ActivityWithProject extends Omit<Activity, 'addTimeEntry'> {
+interface ActivityWithProject extends Omit<Activity, "addTimeEntry"> {
   projectName: string;
   addTimeEntry: (timeEntry: TimeEntry) => void;
 }
@@ -53,15 +53,19 @@ export default function OverviewPage() {
     showThisWeekOnly: false,
     showDescriptions: false,
     sortByHoursDescending: true,
-    showCharts: true,
+    showCharts: false,
   });
 
   // Derived data from our service
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-  const [sumsByActivity, setSumsByActivity] = useState<Record<string, number>>({});
+  const [sumsByActivity, setSumsByActivity] = useState<Record<string, number>>(
+    {}
+  );
   const [sumsByDay, setSumsByDay] = useState<Record<string, number>>({});
   const [sortedDays, setSortedDays] = useState<string[]>([]);
-  const [dayActivityBreakdown, setDayActivityBreakdown] = useState<Record<string, Record<string, number>>>({});
+  const [dayActivityBreakdown, setDayActivityBreakdown] = useState<
+    Record<string, Record<string, number>>
+  >({});
   const [activityDetails, setActivityDetails] = useState<ActivityDetailsState>({
     activityMap: {},
     entries: {},
@@ -91,7 +95,7 @@ export default function OverviewPage() {
         projectName: project ? project.name : "Unknown Project",
         addTimeEntry: (timeEntry: TimeEntry) => {
           activity.addTimeEntry(timeEntry);
-        }
+        },
       };
     });
 
@@ -130,22 +134,22 @@ export default function OverviewPage() {
     const daySums: Record<string, number> = {};
     // Track hours per activity for each day
     const dayActivityBreakdown: Record<string, Record<string, number>> = {};
-    
+
     filteredEntries.forEach((entry) => {
       const dateKey = entry.date.toISOString().split("T")[0];
       const activityId = entry.activityId;
-      
+
       // Initialize if first entry for this day
       if (!daySums[dateKey]) {
         daySums[dateKey] = 0;
         dayActivityBreakdown[dateKey] = {};
       }
-      
+
       // Initialize activity tracking for this day if needed
       if (!dayActivityBreakdown[dateKey][activityId]) {
         dayActivityBreakdown[dateKey][activityId] = 0;
       }
-      
+
       // Add hours to day sum and activity breakdown
       daySums[dateKey] += entry.hours;
       dayActivityBreakdown[dateKey][activityId] += entry.hours;
@@ -188,18 +192,20 @@ export default function OverviewPage() {
   // Prepare chart data for activities
   const getActivityChartData = () => {
     const sortedActivities = getSortedActivities();
-    
+
     return {
       labels: sortedActivities.map(([activityId]) => {
         const activity = activityDetails.activityMap[activityId];
-        return activity ? `${activity.name} (${activity.projectName})` : 'Unknown';
+        return activity
+          ? `${activity.name} (${activity.projectName})`
+          : "Unknown";
       }),
       datasets: [
         {
-          label: 'Hours',
+          label: "Hours",
           data: sortedActivities.map(([, hours]) => hours),
-          backgroundColor: 'rgba(54, 162, 235, 0.7)',
-          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: "rgba(54, 162, 235, 0.7)",
+          borderColor: "rgba(54, 162, 235, 1)",
           borderWidth: 1,
         },
       ],
@@ -209,13 +215,13 @@ export default function OverviewPage() {
   // Prepare chart data for days
   const getDayChartData = () => {
     return {
-      labels: sortedDays.map(day => new Date(day).toLocaleDateString()),
+      labels: sortedDays.map((day) => new Date(day).toLocaleDateString()),
       datasets: [
         {
-          label: 'Hours',
-          data: sortedDays.map(day => sumsByDay[day]),
-          backgroundColor: 'rgba(75, 192, 192, 0.7)',
-          borderColor: 'rgba(75, 192, 192, 1)',
+          label: "Hours",
+          data: sortedDays.map((day) => sumsByDay[day]),
+          backgroundColor: "rgba(75, 192, 192, 0.7)",
+          borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 1,
         },
       ],
@@ -228,11 +234,11 @@ export default function OverviewPage() {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: "top" as const,
       },
       title: {
         display: true,
-        text: 'Time Distribution',
+        text: "Time Distribution",
       },
     },
     scales: {
@@ -240,7 +246,7 @@ export default function OverviewPage() {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Hours',
+          text: "Hours",
         },
       },
     },
@@ -324,7 +330,7 @@ export default function OverviewPage() {
               {filters.sortByHoursDescending ? "Yes" : "No"}
             </button>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <label>Show charts?</label>
             <button
@@ -341,20 +347,107 @@ export default function OverviewPage() {
         </div>
       </div>
 
+      {/* Daily Summary Section */}
+      {filters.showDailyView && (
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold mb-4">Time by Day</h2>
+
+          {/* Daily Chart */}
+          {filters.showCharts && sortedDays.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <div style={{ height: "400px" }}>
+                <Bar data={getDayChartData()} options={chartOptions} />
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-lg shadow-md p-6">
+            {sortedDays.length > 0 ? (
+              <table className="w-full">
+                <thead className="border-b">
+                  <tr>
+                    <th className="text-left py-2">Date</th>
+                    <th className="text-left py-2">Activity Breakdown</th>
+                    <th className="text-right py-2">Total Hours</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedDays.map((day) => (
+                    <tr key={day} className="border-b hover:bg-gray-50">
+                      <td className="py-3">
+                        {new Date(day).toLocaleDateString()}
+                      </td>
+                      <td className="py-3">
+                        <div className="space-y-1">
+                          {Object.entries(dayActivityBreakdown[day] || {})
+                            .sort(([, hoursA], [, hoursB]) =>
+                              filters.sortByHoursDescending
+                                ? hoursB - hoursA
+                                : hoursA - hoursB
+                            )
+                            .map(([activityId, hours]) => {
+                              const activity =
+                                activityDetails.activityMap[activityId];
+                              return (
+                                <div
+                                  key={activityId}
+                                  className="flex justify-between text-sm"
+                                >
+                                  <span className="text-gray-700">
+                                    {activity ? activity.name : "Unknown"}
+                                    <span className="text-gray-500 ml-1">
+                                      (
+                                      {activity
+                                        ? activity.projectName
+                                        : "Unknown Project"}
+                                      )
+                                    </span>
+                                  </span>
+                                  <span className="font-medium">
+                                    {hours.toFixed(2)} hrs
+                                  </span>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </td>
+                      <td className="py-3 text-right font-semibold">
+                        {sumsByDay[day].toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="bg-gray-50">
+                    <td className="py-3 font-bold">Total</td>
+                    <td></td>
+                    <td className="py-3 text-right font-bold">
+                      {Object.values(sumsByDay)
+                        .reduce((sum, hours) => sum + hours, 0)
+                        .toFixed(2)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-gray-500">No daily data available.</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Activity Summary Section */}
       {filters.showActivityView && (
-        <div className="mb-10">
+        <div>
           <h2 className="text-2xl font-bold mb-4">Time by Activity</h2>
-          
+
           {/* Activity Chart */}
           {filters.showCharts && getSortedActivities().length > 0 && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <div style={{ height: '400px' }}>
+              <div style={{ height: "400px" }}>
                 <Bar data={getActivityChartData()} options={chartOptions} />
               </div>
             </div>
           )}
-          
+
           <div className="bg-white rounded-lg shadow-md p-6">
             {getSortedActivities().length > 0 ? (
               <table className="w-full">
@@ -448,81 +541,6 @@ export default function OverviewPage() {
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Daily Summary Section */}
-      {filters.showDailyView && (
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Time by Day</h2>
-          
-          {/* Daily Chart */}
-          {filters.showCharts && sortedDays.length > 0 && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <div style={{ height: '400px' }}>
-                <Bar data={getDayChartData()} options={chartOptions} />
-              </div>
-            </div>
-          )}
-          
-          <div className="bg-white rounded-lg shadow-md p-6">
-            {sortedDays.length > 0 ? (
-              <table className="w-full">
-                <thead className="border-b">
-                  <tr>
-                    <th className="text-left py-2">Date</th>
-                    <th className="text-left py-2">Activity Breakdown</th>
-                    <th className="text-right py-2">Total Hours</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedDays.map((day) => (
-                    <tr key={day} className="border-b hover:bg-gray-50">
-                      <td className="py-3">
-                        {new Date(day).toLocaleDateString()}
-                      </td>
-                      <td className="py-3">
-                        <div className="space-y-1">
-                          {Object.entries(dayActivityBreakdown[day] || {})
-                            .sort(([, hoursA], [, hoursB]) => 
-                              filters.sortByHoursDescending ? hoursB - hoursA : hoursA - hoursB
-                            )
-                            .map(([activityId, hours]) => {
-                              const activity = activityDetails.activityMap[activityId];
-                              return (
-                                <div key={activityId} className="flex justify-between text-sm">
-                                  <span className="text-gray-700">
-                                    {activity ? activity.name : "Unknown"} 
-                                    <span className="text-gray-500 ml-1">
-                                      ({activity ? activity.projectName : "Unknown Project"})
-                                    </span>
-                                  </span>
-                                  <span className="font-medium">{hours.toFixed(2)} hrs</span>
-                                </div>
-                              );
-                            })}
-                        </div>
-                      </td>
-                      <td className="py-3 text-right font-semibold">
-                        {sumsByDay[day].toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="bg-gray-50">
-                    <td className="py-3 font-bold">Total</td>
-                    <td></td>
-                    <td className="py-3 text-right font-bold">
-                      {Object.values(sumsByDay)
-                        .reduce((sum, hours) => sum + hours, 0)
-                        .toFixed(2)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            ) : (
-              <p className="text-gray-500">No daily data available.</p>
-            )}
-          </div>
         </div>
       )}
 
